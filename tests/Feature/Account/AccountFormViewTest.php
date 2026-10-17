@@ -1,0 +1,42 @@
+<?php
+
+use App\Enums\PanelId;
+use App\Filament\Resources\Accounts\Pages\CreateAccount;
+use App\Filament\Resources\Accounts\Pages\EditAccount;
+use App\Models\Account;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+use function Pest\Livewire\livewire;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+
+    $this->account = Account::factory()->for($this->user)->create();
+
+    PanelId::APP->setCurrentPanel();
+});
+
+it('loads Initial Balance when creating account', function () {
+    livewire(CreateAccount::class)
+        ->assertSeeText('Initial Balance')
+        ->assertDontSeeText('Current Balance');
+});
+
+it('loads Current Balance when editing account', function () {
+    livewire(EditAccount::class, ['record' => $this->account->getRouteKey()])
+        ->assertSeeHtml('Current Balance');
+});
+
+it('cannot display current balance form field on create', function () {
+    livewire(CreateAccount::class)
+        ->assertFormFieldIsHidden('current_balance');
+});
+
+it('can display current balance form field', function () {
+    livewire(EditAccount::class, ['record' => $this->account->getRouteKey()])
+        ->assertFormFieldIsVisible('current_balance');
+});
